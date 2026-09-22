@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="finviz-data-mode" content="api">
+  <meta name="description" content="A considered view of your Finviz filters, daily overlap, and collected history.">
+  <title>Overlap · Finviz Filter Tracker</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="#dashboard" aria-label="Overlap dashboard"><img src="./favicon.svg" alt="" width="32" height="32"><span>Overlap<span class="brand-caption">FINVIZ FILTER TRACKER</span></span></a>
+      <nav aria-label="Main navigation"><a href="#dashboard" data-nav="dashboard" aria-current="page">Dashboard</a><a href="#screener" data-nav="screener">Screener</a></nav>
+      <div class="header-actions"><label class="date-control"><span class="sr-only">Scan date</span><select id="scan-date" disabled><option>Loading dates…</option></select></label><button id="refresh" class="button" title="Reload saved scans. This does not run a new Finviz scan."><span aria-hidden="true">↻</span> Refresh data</button></div>
+    </div>
+  </header>
+  <main id="main" tabindex="-1">
+    <section id="desktop-controls" class="desktop-controls" aria-label="Finviz scan" hidden>
+      <div><strong id="desktop-heading">Daily collection</strong><p id="desktop-status" role="status" aria-live="polite"></p></div>
+      <button id="run-scan" class="button">Run Scan</button>
+    </section>
+    <div id="notice" role="status" hidden></div>
+    <div id="loading" class="loading-state" role="status"><p class="eyebrow">YOUR DAILY RESEARCH, TOGETHER</p><h1>Loading your scan</h1><p>Reading the latest saved results.</p><div class="skeleton-grid" aria-hidden="true"><div></div><div></div><div></div></div></div>
+    <div id="app" hidden>
+      <section id="dashboard-view" aria-labelledby="dashboard-title">
+        <div class="page-heading"><div><p class="eyebrow" id="dashboard-date">DAILY RESEARCH</p><h1 id="dashboard-title">Daily overview</h1><p class="subtitle">Seven perspectives. One clearer picture.</p></div><div class="scan-context" id="scan-context"></div></div>
+        <div id="dashboard-content"></div>
+      </section>
+      <section id="screener-view" aria-labelledby="screener-title" hidden>
+        <div class="page-heading"><div><p class="eyebrow">EXPLORE YOUR SCAN</p><h1 id="screener-title">Stock screener</h1><p class="subtitle">Find the overlap that matters to your research.</p></div><p class="scan-context" id="screener-date"></p></div>
+        <div class="screener-panel">
+          <div class="search-row"><label class="search-box"><span aria-hidden="true">⌕</span><span class="sr-only">Search ticker or company</span><input id="search" type="search" placeholder="Search ticker or company" autocomplete="off"></label><button id="reset" class="text-button">Reset filters</button></div>
+          <div class="filter-toolbar" id="filter-toolbar"></div>
+          <div class="filter-explanation"><span>Selections combine across categories.</span><fieldset class="logic-control"><legend>Match selected filters</legend><label><input type="radio" name="filter-mode" value="all" checked><span>All (AND)</span></label><label><input type="radio" name="filter-mode" value="any"><span>Any (OR)</span></label></fieldset></div>
+          <div id="active-filters" class="active-filters" hidden></div>
+          <div class="table-summary"><p id="result-count" role="status" aria-live="polite"></p><span class="muted">Select a ticker to explore its history</span></div>
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Stock results, scroll horizontally for all columns">
+            <table id="stock-table"><caption class="sr-only">Finviz scan results. Column buttons change sorting.</caption><thead><tr>
+              <th scope="col" aria-sort="none"><button data-sort="ticker">Ticker <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button data-sort="company">Company <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button data-sort="sector">Sector <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="none"><button data-sort="industry">Industry <span aria-hidden="true">↕</span></button></th>
+              <th scope="col" aria-sort="descending"><button data-sort="match_count">Match Count <span aria-hidden="true">↓</span></button></th>
+              <th scope="col" aria-sort="none"><button data-sort="matched_filters">Filters Matched <span aria-hidden="true">↕</span></button></th>
+            </tr></thead><tbody id="stock-rows"></tbody></table>
+          </div>
+          <div id="table-empty" class="empty-state" hidden><span class="empty-symbol" aria-hidden="true">⌕</span><h2>No stocks match these selections</h2><p>Try a broader search or remove a filter.</p><button class="button" data-action="reset">Clear all filters</button></div>
+          <div class="pagination"><label>Rows per page <select id="page-size"><option>25</option><option selected>50</option><option>100</option><option value="10000">All</option></select></label><div><span id="page-label"></span><button class="button" id="previous" aria-label="Previous page">←</button><button class="button" id="next" aria-label="Next page">→</button></div></div>
+        </div>
+      </section>
+    </div>
+    <footer><span>Overlap <span aria-hidden="true">/</span> Independent research, organized.</span><span>Manual scans · Appearance follows your system</span></footer>
+  </main>
+  <dialog id="ticker-dialog" aria-labelledby="detail-title"><div class="detail-top"><span class="eyebrow">TICKER DETAIL</span><button class="icon-button" id="close-detail" aria-label="Close ticker detail" autofocus>×</button></div><div id="detail-content"></div></dialog>
+  <noscript><p class="empty-state">Enable JavaScript to explore your saved scans. The Python CLI remains available.</p></noscript>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.venv/
+.venv-build/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.DS_Store
+data/
+build/
+dist/
+site/
+web-data/debug/
+web-data/scans/
+web-data/latest-scan.json

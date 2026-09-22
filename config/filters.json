@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Momentum",
+    "url": "https://finviz.com/screener?v=111&f=cap_smallover%2Cfa_epsqoq_o25%2Cfa_epsyoyttm_pos%2Cfa_netmargin_pos%2Cfa_roe_pos%2Cfa_salesqoq_o10%2Cfa_salesyoyttm_pos%2Csh_avgvol_o100%2Csh_price_o10%2Cta_highlow52w_a50h%2Cta_sma20_sa50%2Cta_sma200_pa%2Cta_sma50_pa&ft=4&preset=s151555367"
+  },
+  {
+    "name": "Fortaleza",
+    "url": "https://finviz.com/screener?v=111&f=cap_smallover%2Cind_stocksonly%2Csh_avgvol_o200%2Cta_averagetruerange_o1%2Cta_highlow52w_a40h%2Cta_perf_ytdup%2Cta_perf2_4wup%2Cta_sma20_pa%2Cta_sma200_pa%2Cta_sma50_pa20&ft=4&o=sma50&preset=s151565349"
+  },
+  {
+    "name": "Strong up trend 1",
+    "url": "https://finviz.com/screener?v=111&f=cap_midover,sh_avgvol_o200,sh_price_o10,sh_relvol_o2,ta_gap_u,ta_highlow52w_nh,ta_pattern_channelup,ta_rsi_ob60,ta_sma200_pa&ft=4&preset=s149592627"
+  },
+  {
+    "name": "Strong up trend 2",
+    "url": "https://finviz.com/screener?v=111&f=cap_midover%2Csh_avgvol_o200%2Csh_price_o10%2Csh_relvol_o2%2Cta_sma20_pa%2Cta_sma200_pa%2Cta_sma50_pa&ft=4&o=perfytd&preset=s149592625"
+  },
+  {
+    "name": "Strong up trend 3",
+    "url": "https://finviz.com/screener?v=111&f=sh_avgvol_o200,sh_price_o10,ta_gap_u,ta_highlow52w_nh,ta_pattern_channelup,ta_rsi_ob60,ta_sma200_pa&ft=4&preset=s1495926355"
+  },
+  {
+    "name": "Volumen climático",
+    "url": "https://finviz.com/screener?v=111&f=cap_large%2Cind_stocksonly%2Csh_curvol_o5000%2Csh_relvol_o1.5%2Cta_change_u%2Cta_perf_1wup%2Cta_perf2_4wup&ft=4&preset=s149592629"
+  },
+  {
+    "name": "Ganadores semanales",
+    "url": "https://finviz.com/screener?v=111&f=sh_avgvol_o100%2Csh_price_o5%2Cta_perf_1w20o&ft=4&r=21&preset=s151629466"
+  }
+]

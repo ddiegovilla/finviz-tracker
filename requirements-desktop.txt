@@ -1,0 +1,4 @@
+-r requirements.txt
+pywebview==6.2.1
+tzlocal>=5.3,<6
+tzdata>=2025.2

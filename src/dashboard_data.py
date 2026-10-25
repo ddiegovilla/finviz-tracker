@@ -20,7 +20,12 @@ class DashboardData(Storage):
         if selected_date:
             date.fromisoformat(selected_date)
         dates = [row[0] for row in self.connection.execute("SELECT DISTINCT run_date FROM runs ORDER BY run_date DESC")]
-        selected_date = selected_date or (dates[0] if dates else None)
+        # Failed attempts remain selectable, but must not hide saved results
+        # when opening the dashboard without an explicit date.
+        default_date = self.connection.execute(
+            "SELECT MAX(run_date) FROM runs WHERE status IN ('complete', 'partial')"
+        ).fetchone()[0] or (dates[0] if dates else None)
+        selected_date = selected_date or default_date
         latest = self.connection.execute("SELECT * FROM runs ORDER BY id DESC LIMIT 1").fetchone()
         timezone_name = latest["timezone"] if latest else "America/Monterrey"
         attempts = self.connection.execute(
@@ -34,6 +39,7 @@ class DashboardData(Storage):
             "today": datetime.now(ZoneInfo(timezone_name)).date().isoformat(),
             "timezone": timezone_name,
             "dates": dates,
+            "default_date": default_date,
             "selected_date": selected_date,
             "latest_attempt": dict(latest) if latest else None,
             "selected_attempt": dict(attempts[0]) if attempts else None,

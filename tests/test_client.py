@@ -60,13 +60,20 @@ def test_incomplete_pagination_raises_and_saves_html(tmp_path, monkeypatch, scre
     client.close()
 
 
-def test_redirect_can_drop_preset_but_not_filters_or_sort():
+@pytest.mark.parametrize("path", ["/screener", "/screener.ashx", "/screener/stocks"])
+def test_redirect_can_drop_preset_but_not_filters_or_sort(path):
     requested = page_url(URL, 1)
-    validate_response_url(requested, requested.replace("%2C", ",").replace("&preset=test", ""))
+    redirected = requested.replace("/screener", path).replace("%2C", ",").replace("&preset=test", "")
+    validate_response_url(requested, redirected)
     with pytest.raises(ScrapeError):
-        validate_response_url(requested, requested.replace("first%2Csecond", "first"))
+        validate_response_url(requested, redirected.replace("first,second", "first"))
     with pytest.raises(ScrapeError):
-        validate_response_url(requested + "&o=sma50", requested)
+        validate_response_url(requested + "&o=sma50", redirected)
+    validate_response_url(page_url(requested, 21), page_url(redirected, 21))
+    with pytest.raises(ScrapeError, match="pagination"):
+        validate_response_url(page_url(requested, 21), redirected)
+    with pytest.raises(ScrapeError, match="Unexpected redirect"):
+        validate_response_url(requested, redirected.replace("finviz.com", "example.com"))
     with pytest.raises(ScrapeError):
         validate_response_url(requested, "https://finviz.com/login")
 
@@ -85,3 +92,15 @@ def test_rate_limit_retries_and_keeps_failed_response(tmp_path, monkeypatch, scr
     assert len(client.scrape_filter(FilterDefinition("Test", URL))) == 1
     assert next(tmp_path.glob("*.html")).read_text() == "Rate limited"
     client.close()
+
+
+def test_stocks_route_can_drop_only_redundant_stocks_only_token():
+    requested = "https://finviz.com/screener?v=111&f=cap_smallover,ind_stocksonly,sh_avgvol_o200&ft=4"
+    redirected = requested.replace("/screener?", "/screener/stocks?").replace("ind_stocksonly,", "")
+    validate_response_url(requested, redirected)
+    with pytest.raises(ScrapeError, match="parameter f"):
+        validate_response_url(requested, redirected.replace("cap_smallover,", ""))
+    with pytest.raises(ScrapeError, match="parameter f"):
+        validate_response_url(requested, redirected.replace("/screener/stocks?", "/screener?"))
+    with pytest.raises(ScrapeError, match="Unexpected redirect"):
+        validate_response_url(requested, redirected.replace("/screener/stocks?", "/screener/etfs?"))

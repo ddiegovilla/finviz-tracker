@@ -15,12 +15,18 @@ def test_static_site_exports_api_data_and_relative_assets(tmp_path):
     run_id = storage.start_run(filters, timestamp, "America/Monterrey")
     storage.save_filter(run_id, "Momentum", [Stock("TESTA", "Test A", "Technology", "Software")])
     storage.finish_run(run_id, timestamp)
+    failed_timestamp = timestamp.replace(day=23)
+    failed_id = storage.start_run(filters, failed_timestamp, "America/Monterrey")
+    storage.fail_filter(failed_id, "Momentum", "Unexpected redirect")
+    storage.finish_run(failed_id, failed_timestamp)
     storage.close()
 
     output = tmp_path / "site"
     bundle = export_site(database, output)
 
     assert bundle["latest_date"] == "2026-09-22"
+    assert bundle["overviews"]["2026-09-23"]["snapshot"] is None
+    assert bundle["overviews"]["2026-09-22"]["latest_attempt"]["id"] == failed_id
     assert bundle["overviews"]["2026-09-22"]["snapshot"]["stocks"][0]["ticker"] == "TESTA"
     assert bundle["tickers"]["2026-09-22"]["TESTA"]["days_appeared"] == 1
     saved = json.loads((output / "site-data.json").read_text())

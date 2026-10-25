@@ -29,6 +29,22 @@ def main() -> None:
         page.get_by_role("button", name=ticker, exact=True).first.click()
         page.locator(".history-table").wait_for()
         assert page.locator(".history-table tbody tr").count() > 0
+        page.keyboard.press("Escape")
+        # Refresh must download the bundle again, including after a deployment.
+        with page.expect_response(lambda response: "site-data.json" in response.url) as refreshed:
+            page.get_by_role("button", name="Refresh data").click()
+        bundle = refreshed.value.json()
+        page.wait_for_function("!document.querySelector('#refresh').disabled")
+        failed_dates = [day for day, overview in bundle["overviews"].items() if not overview["snapshot"]]
+        if failed_dates:
+            page.get_by_role("link", name="Dashboard", exact=True).click()
+            page.locator("#scan-date").select_option(failed_dates[0])
+            page.get_by_role("heading", name="No published snapshot for this date").wait_for()
+            assert page.locator("#dashboard-content code").count() == 0
+            page.locator("#scan-date").select_option("")
+            page.locator(".metrics").wait_for()
+            latest_run = bundle["overviews"][bundle["latest_date"]]["snapshot"]["run"]
+            assert page.locator("#app").get_attribute("data-run-id") == str(latest_run["id"])
         assert not errors, errors
         print(json.dumps({"passed": True, "stocks": stocks, "ticker_detail": ticker}))
         browser.close()

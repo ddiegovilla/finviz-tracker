@@ -20,7 +20,8 @@ def parse_screener(html: str) -> ScreenerPage:
     # matches. Keep the selectors narrow so an unrelated "0 Total" elsewhere
     # on the page can never turn a malformed response into a successful scan.
     total_element = soup.select_one(
-        "#screener-total, #js-screener-body-empty .count-text"
+        "#screener-total, #js-screener-body-empty .count-text, "
+        ".screener_results .fv-table_toolbar-count"
     )
     if total_element is None:
         raise ParseError("Missing screener result count; possible challenge or changed markup")
@@ -32,25 +33,27 @@ def parse_screener(html: str) -> ScreenerPage:
         raise ParseError(f"Unrecognized result count: {count_text!r}")
     total = int(count_match.group(1).replace(",", ""))
 
-    table = soup.select_one("table.screener_table")
+    table = soup.select_one('table.screener_table, .screener_results [role="grid"]')
     if table is None:
         if total == 0 and soup.select_one("#screener-content, #screener-table, #screener-views-table"):
             return ScreenerPage([], [], 0)
         raise ParseError("Missing screener overview table")
 
     required = ("No.", "Ticker", "Company", "Sector", "Industry")
-    header = table.find("tr")
+    is_grid = table.get("role") == "grid"
+    header = table.select_one('[role="row"]') if is_grid else table.find("tr")
     if header is None:
         raise ParseError("Missing table header")
-    headers = [cell.get_text(" ", strip=True) for cell in header.find_all(["th", "td"], recursive=False)]
+    header_cells = header.select('[role="columnheader"]') if is_grid else header.find_all(["th", "td"], recursive=False)
+    headers = [cell.get_text(" ", strip=True) for cell in header_cells]
     if not all(name in headers for name in required):
         raise ParseError(f"Missing required overview columns: {headers}")
     positions = {name: headers.index(name) for name in required}
     stocks, row_numbers = [], []
-    for row in table.find_all("tr"):
+    for row in table.select('[role="row"]') if is_grid else table.find_all("tr"):
         if row is header:
             continue
-        cells = row.find_all("td", recursive=False)
+        cells = row.select('[role="gridcell"]') if is_grid else row.find_all("td", recursive=False)
         if not cells:
             continue
         if len(cells) != len(headers):
@@ -62,6 +65,9 @@ def parse_screener(html: str) -> ScreenerPage:
             ticker_link = ticker_cell.select_one('a[href*="t="]')
         if ticker_link is None:
             raise ParseError("Missing ticker link")
+        # The current grid nests a decorative logo initial inside the link.
+        for decoration in ticker_link.select('[aria-hidden="true"]'):
+            decoration.decompose()
         ticker = ticker_link.get_text(strip=True)
         linked_ticker = parse_qs(urlsplit(ticker_link.get("href", "")).query).get("t", [])
         if not re.fullmatch(r"[A-Z0-9][A-Z0-9.\-^/]*", ticker) or linked_ticker != [ticker]:

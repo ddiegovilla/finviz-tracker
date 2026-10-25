@@ -157,7 +157,7 @@ A ticker absent from a complete collected scan gets a genuine zero for that date
 
 **Scans are still manual.** The dashboard does not contact Finviz or launch scans. Run `python -m src.main` to collect a new snapshot. **Refresh data** rereads SQLite only. While the dashboard is open and idle, it checks saved results every 60 seconds; it defers updates during input, filter-menu use, or ticker-detail inspection to preserve focus. The Latest date option follows new collected dates; a specifically selected date stays selected.
 
-SQLite is the source of truth. `data/latest-scan.json` is only an optional export and can lag behind the database if a scan was run without `--output`. Every run has a new ID; same-day reruns and all previous dates remain intact. A newer failed attempt never replaces a complete snapshot for that date. No new history schema or migration is required.
+SQLite is the source of truth. `data/latest-scan.json` is only an optional export and can lag behind the database if a scan was run without `--output`. Every run has a new ID; same-day reruns and all previous dates remain intact. A newer failed attempt never replaces a complete snapshot for that date. Latest opens the newest date with saved complete or partial results, with a warning if newer attempts failed. Explicitly selecting a failed date still shows its unavailable status. No new history schema or migration is required.
 
 ## Tests
 
@@ -224,7 +224,7 @@ Successful filters commit individually. Normal completion writes consolidated re
 ## Finviz behavior and limitations
 
 - The original URLs are stored unchanged. The client removes the initial `r=21` from Ganadores semanales and changes only `r` for pagination. It starts every filter at the first row and continues until the advertised total is reached.
-- Finviz currently redirects URLs to remove `preset` and normalize comma encoding. The scraper follows that server redirect and verifies that view, filters, sort order, and pagination remain unchanged. No password or preset access is required for these explicit filter URLs.
+- Finviz redirects legacy URLs to `/screener/stocks`, removes `preset`, and normalizes comma encoding. On that stocks route it also removes the redundant `ind_stocksonly` token. The scraper accepts these known changes while checking all remaining filters, view, sort order, and pagination. It reads both the legacy HTML table and the current server-rendered grid, including decorative ticker logos and explicit zero-result screens.
 - Direct `requests` acquisition worked for every filter in the live validation; a browser fallback was unnecessary. If access changes, inspect saved HTML first. Acquisition can be replaced while retaining the parser, aggregator, and storage modules.
 - Timeouts and selected transient HTTP failures have bounded retries. HTTP 429 is retried with backoff and numeric `Retry-After` support; a requested cooldown over 60 seconds stops that filter so the scan can continue. Persistent blocks or markup changes produce explicit failures.
 - Finviz is a live website: results can change while pages are read. The scraper rejects changing totals, duplicate tickers, and unexpected row numbers. It cannot provide an atomic market-wide snapshot or detect every possible membership change with an unchanged count. Rerun an incomplete scan, preferably when results are stable.

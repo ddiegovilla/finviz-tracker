@@ -16,6 +16,8 @@ The included schedule runs at 4:30 PM Monday through Friday in `America/Monterre
 - GitHub Pages is public on the free plan. The published ticker/filter results and the public repository can be viewed by anyone with the URL.
 - GitHub Pages is static; it cannot run Python, contact Finviz, or open SQLite when somebody visits. The GitHub Action performs those jobs before publishing.
 - The workflow makes up to three bounded scan attempts. If Finviz remains unavailable, the website preserves the honest partial-scan warning instead of treating missing filters as zero.
+- The Latest view opens the newest date with a complete or partial saved scan. If newer attempts failed, it shows the saved date and a warning. Selecting a failed date explicitly still shows that no snapshot is available for that date.
+- Refresh data and automatic refresh fetch the published data again, so an open page can receive a new deployment.
 - Each successful workflow commits only the SQLite history database. Generated debug pages and the deployable `site/` directory are not committed.
 - For an immediate update, use **Actions → Scan and publish website → Run workflow**. No visitor needs to reinstall anything.
 

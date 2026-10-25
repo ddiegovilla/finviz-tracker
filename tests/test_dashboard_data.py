@@ -64,6 +64,37 @@ def test_seven_collected_dates_not_seven_calendar_days(tmp_path):
     reader.close()
 
 
+@pytest.mark.parametrize("status", ["complete", "partial"])
+def test_latest_falls_back_to_saved_date_but_explicit_failed_date_stays_empty(tmp_path, status):
+    path = tmp_path / "history.db"
+    storage = Storage(path)
+    saved = add_run(storage, NOW - timedelta(days=3), status=status)
+    failed = add_run(storage, status="failed")
+    storage.close()
+    reader = DashboardData(path)
+    overview = reader.overview()
+    assert overview["selected_date"] == overview["default_date"] == "2026-09-13"
+    assert overview["snapshot"]["run"]["id"] == saved["run"]["id"]
+    assert overview["latest_attempt"]["id"] == failed["run"]["id"]
+    assert overview["dates"] == ["2026-09-16", "2026-09-13"]
+    assert reader.overview("2026-09-16")["snapshot"] is None
+    assert reader.ticker_detail("TESTA")["selected_date"] == "2026-09-13"
+    reader.close()
+
+
+def test_failed_only_history_keeps_latest_attempt_visible(tmp_path):
+    path = tmp_path / "history.db"
+    storage = Storage(path)
+    add_run(storage, status="failed")
+    storage.close()
+    reader = DashboardData(path)
+    overview = reader.overview()
+    assert overview["selected_date"] == "2026-09-16"
+    assert overview["snapshot"] is None
+    assert overview["latest_attempt"]["status"] == "failed"
+    reader.close()
+
+
 def test_partial_is_visible_but_excluded_from_collected_history(tmp_path):
     path = tmp_path / "history.db"
     storage = Storage(path)

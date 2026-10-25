@@ -35,9 +35,16 @@ def page_url(url: str, offset: int) -> str:
 def validate_response_url(requested_url: str, response_url: str) -> None:
     requested = parse_qs(urlsplit(requested_url).query)
     response = urlsplit(response_url)
-    if response.hostname not in ("finviz.com", "www.finviz.com") or response.path not in ("/screener", "/screener.ashx"):
+    if response.hostname not in ("finviz.com", "www.finviz.com") or response.path not in ("/screener", "/screener.ashx", "/screener/stocks"):
         raise ScrapeError(f"Unexpected redirect: {response_url}")
     actual = parse_qs(response.query)
+    # The dedicated stocks route makes the old stocks-only industry token
+    # redundant. Finviz removes it when redirecting legacy screener URLs.
+    if response.path == "/screener/stocks" and requested.get("f") != actual.get("f"):
+        requested["f"] = [
+            ",".join(token for token in value.split(",") if token != "ind_stocksonly")
+            for value in requested.get("f", [])
+        ]
     for parameter in ("v", "f", "ft", "o"):
         if requested.get(parameter) != actual.get(parameter):
             raise ScrapeError(f"Redirect changed screener parameter {parameter}")

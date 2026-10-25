@@ -35,7 +35,7 @@ def build_bundle(database: Path) -> dict:
                 ticker = stock["ticker"]
                 tickers[scan_date][ticker] = reader.ticker_detail(ticker, scan_date)
         return {
-            "latest_date": dates[0] if dates else None,
+            "latest_date": latest["selected_date"],
             "overviews": overviews,
             "tickers": tickers,
         }

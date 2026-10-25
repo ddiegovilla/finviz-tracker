@@ -69,6 +69,7 @@ async function loadData(quiet = false) {
     element("#app").setAttribute("aria-busy", "true");
   }
   try {
+    if (dataMode === "static") staticDataPromise = null;
     const data = await fetchJSON(`/api/overview${state.date ? `?date=${encodeURIComponent(state.date)}` : ""}`);
     if (request !== state.request) return;
     const changed = JSON.stringify(data) !== JSON.stringify(state.data);
@@ -96,13 +97,14 @@ function render() {
   const data = state.data;
   element("#app").dataset.runId = data.snapshot?.run.id ?? "";
   const dates = data.dates || [];
-  element("#scan-date").innerHTML = dates.length ? `<option value="">Latest · ${escape(formatDate(dates[0]))}</option>${dates.map(day => `<option value="${escape(day)}">${escape(formatDate(day, { year: "numeric" }))}</option>`).join("")}` : '<option value="">No scans yet</option>';
+  element("#scan-date").innerHTML = dates.length ? `<option value="">Latest · ${escape(formatDate(data.default_date || dates[0]))}</option>${dates.map(day => `<option value="${escape(day)}">${escape(formatDate(day, { year: "numeric" }))}</option>`).join("")}` : '<option value="">No scans yet</option>';
   element("#scan-date").value = state.date;
   element("#scan-date").disabled = !dates.length;
   const notes = [];
   if (data.selected_date && data.selected_date !== data.today) notes.push(`Viewing the ${formatDate(data.selected_date, { year: "numeric" })} scan. These are saved observations, not today's results.`);
   if (data.snapshot?.run.status === "partial") notes.push("Incomplete scan: match counts are lower bounds. Unavailable filters are not counted as zero.");
   if (data.selected_attempt && data.selected_attempt.status !== "complete") notes.push(`Latest attempt for this date: ${data.selected_attempt.status}.${data.snapshot?.run.status === "complete" ? " Showing the earlier complete scan." : ""}`);
+  if (!state.date && data.latest_attempt && data.latest_attempt.run_date !== data.selected_date) notes.push(`The scan attempted on ${formatDate(data.latest_attempt.run_date, { year: "numeric" })} is ${data.latest_attempt.status}. Showing the latest available saved scan.`);
   notify(notes.join(" "));
   renderDashboard();
   renderFilterControls();
@@ -132,6 +134,8 @@ function renderDashboard() {
     element("#scan-context").textContent = "Waiting for a saved scan";
     element("#dashboard-content").innerHTML = desktop.enabled
       ? '<div class="panel data-empty"><h2>Your research starts with a scan</h2><p>Choose Run Scan above to collect all seven filters. To bring existing history, choose File → Import History before your first scan.</p></div>'
+      : dataMode === "static"
+      ? '<div class="panel data-empty"><h2>No published snapshot for this date</h2><p>Choose another saved date. Scans run automatically; use Refresh data after the next update.</p></div>'
       : `<div class="panel data-empty"><h2>${data.selected_attempt ? "No usable snapshot for this date" : "Your research starts with a scan"}</h2><p>Run the existing scan command, then refresh this page. Previous observations are preserved.</p><code>python -m src.main</code></div>`;
     return;
   }
@@ -205,7 +209,7 @@ function renderScreener() {
   element("#stock-rows").innerHTML = page.map(stock => `<tr><td><button class="ticker-link" data-ticker="${escape(stock.ticker)}" aria-haspopup="dialog">${escape(stock.ticker)}</button></td><td>${escape(stock.company)}</td><td>${escape(stock.sector)}</td><td>${escape(stock.industry)}</td><td><span class="count-pill ${stock.match_count >= 3 ? "high" : ""}">${stock.match_count} / ${filterCount()}</span></td><td><div class="cell-filters">${stock.matched_filters.map(name => `<span>${escape(name)}</span>`).join("")}</div></td></tr>`).join("");
   element("#table-empty").hidden = filtered.length !== 0;
   element("#table-empty h2").textContent = stocks().length ? "No stocks match these selections" : state.data?.snapshot ? "No stocks in this scan" : "No saved results for this date";
-  element("#table-empty p").textContent = stocks().length ? "Try a broader search or remove a filter." : state.data?.snapshot ? "Choose another date to explore previously collected observations." : desktop.enabled ? "Choose Run Scan to collect your first results." : "Run the scan command, then refresh your saved data.";
+  element("#table-empty p").textContent = stocks().length ? "Try a broader search or remove a filter." : state.data?.snapshot ? "Choose another date to explore previously collected observations." : desktop.enabled ? "Choose Run Scan to collect your first results." : dataMode === "static" ? "Choose another saved date or refresh after the next automatic scan." : "Run the scan command, then refresh your saved data.";
   element('#table-empty [data-action="reset"]').hidden = !stocks().length;
   element("#stock-table").hidden = filtered.length === 0;
   element("#page-label").textContent = `${filtered.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filtered.length)} of ${filtered.length}`;

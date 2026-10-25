@@ -62,3 +62,38 @@ def test_missing_rows_fails(screener_html):
 def test_ticker_link_must_match(screener_html):
     with pytest.raises(ParseError, match="ticker/link"):
         parse_screener(screener_html().replace("t=TESTA", "t=TESTB"))
+
+
+def test_grid_extracts_rows_across_lanes_without_logo_initial(screener_grid_html):
+    page = parse_screener(screener_grid_html(("TESTA", "TEST-B"), offset=21, total=1234))
+    assert page.total == 1234
+    assert page.row_numbers == [21, 22]
+    assert [stock.ticker for stock in page.stocks] == ["TESTA", "TEST-B"]
+    assert page.stocks[0].company == "Test Company & Co"
+    assert page.stocks[0].sector == "Test Sector"
+    assert page.stocks[0].industry == "Test Industry"
+
+
+def test_grid_explicit_zero_is_valid(screener_grid_html):
+    page = parse_screener(screener_grid_html(()))
+    assert page.total == 0
+    assert page.stocks == []
+
+
+@pytest.mark.parametrize("old,new", [
+    ('class="fv-table_toolbar-count"', 'class="unrelated-count"'),
+    ('role="grid"', 'role="presentation"'),
+    ('>Industry<', '>Country<'),
+    ('t=TESTA', 't=TESTB'),
+    ('Test Sector', ''),
+    ('<div role="gridcell">Test Industry</div>', ''),
+    ('1 Total', '0 Total'),
+])
+def test_malformed_grid_is_not_accepted(screener_grid_html, old, new):
+    with pytest.raises(ParseError):
+        parse_screener(screener_grid_html().replace(old, new))
+
+
+def test_grid_positive_count_without_rows_fails(screener_grid_html):
+    with pytest.raises(ParseError, match="no stock rows"):
+        parse_screener(screener_grid_html((), total=3))
